@@ -1,13 +1,34 @@
 import argparse
-import numpy as np
-import sys, os, subprocess
-import OpenEXR
+import os
+import subprocess
+
 import Imath
+import OpenEXR
+import numpy as np
 from PIL import Image
-from plyfile import PlyData, PlyElement
 
-PATH_TO_MITSUBA2 = "/home/tolga/Codes/mitsuba2/build/dist/mitsuba"  # mitsuba exectuable
+from plyfile import PlyData
 
+
+def distance_point_to_plane(plane_normal: np.ndarray, plane_point: np.ndarray, point: np.ndarray):
+    """
+    Calculates the distance of a point to a plane.
+
+    :param plane_normal: Plane's normal.
+    :param plane_point: Point in the plane
+    :param point: Point to evaluate distance to plane
+    :return:
+    """
+    # Ax+By+Cz+D = distance
+    # normal = (A, B, C), it must be normalized to work (But in this code the normals are computed normalized)
+    # D = - normal * plane_point
+    ans = np.dot(point, plane_normal)
+    ans -= np.dot(plane_point, plane_normal)
+    return ans
+
+
+#PATH_TO_MITSUBA2 = "D:\\Friki\\Estudios\\Git\\mitsuba2\\dist\\mitsuba.exe"  # mitsuba exectuable
+PATH_TO_MITSUBA2 = "mitsuba"
 # replaced by command line arguments
 # PATH_TO_NPY = 'pcl_ex.npy' # the tensor to load
 
@@ -130,13 +151,13 @@ def ConvertEXRToJPG(exrfile, jpgfile):
     DW = File.header()['dataWindow']
     Size = (DW.max.x - DW.min.x + 1, DW.max.y - DW.min.y + 1)
 
-    rgb = [np.fromstring(File.channel(c, PixType), dtype=np.float32) for c in 'RGB']
+    rgb = [np.frombuffer(File.channel(c, PixType), dtype=np.float32) for c in "RGB"]
     for i in range(3):
         rgb[i] = np.where(rgb[i] <= 0.0031308,
                           (rgb[i] * 12.92) * 255.0,
                           (1.055 * (rgb[i] ** (1.0 / 2.4)) - 0.055) * 255.0)
 
-    rgb8 = [Image.frombytes("F", Size, c.tostring()).convert("L") for c in rgb]
+    rgb8 = [Image.frombytes("F", Size, c.tobytes()).convert("L") for c in rgb]
     # rgb8 = [Image.fromarray(c.astype(int)) for c in rgb]
     Image.merge("RGB", rgb8).save(jpgfile, "JPEG", quality=95)
 

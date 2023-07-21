@@ -69,7 +69,7 @@ xml_head = \
 xml_ball_segment = \
     """
     <shape type="sphere">
-        <float name="radius" value="0.015"/>
+        <float name="radius" value="0.007"/>
         <transform name="toWorld">
             <translate x="{}" y="{}" z="{}"/>
         </transform>
@@ -199,9 +199,42 @@ def main(args):
         pcl[:, 2] += 0.0125
 
         xml_segments = [xml_head]
+        # plane normal
+        split_plane_normal = np.array([-0.7, 1, 1])
+        split_plane_normal /= np.linalg.norm(split_plane_normal)
+        split_plane_point = np.array([0.1, 0, 0])
+        distances = distance_point_to_plane(split_plane_normal, split_plane_point, pcl)
+
+        min_coords = np.min(pcl, axis=0)
+        max_coords = np.max(pcl, axis=0)
+        new_points = np.random.uniform(low=min_coords, high=max_coords, size=(pcl.shape[0], 3))
+
+        crop_plane_normal = np.array([0.0, -1.0, 0.0])
+        crop_plane_normal /= np.linalg.norm(crop_plane_normal)
+        crop_plane_point = np.array([0.0, 0.0, 0.0])
+        crop_distances_pcl = distance_point_to_plane(crop_plane_normal, crop_plane_point, pcl)
+        #crop_distances_new_points = distance_point_to_plane(crop_plane_normal, crop_plane_point, new_points)
+        crop_distances_new_points = distance_point_to_plane(split_plane_normal, split_plane_point, new_points)
+
         for i in range(pcl.shape[0]):
-            color = colormap(pcl[i, 0] + 0.5, pcl[i, 1] + 0.5, pcl[i, 2] + 0.5 - 0.0125)
+            #if crop_distances_pcl[i] < 0:
+                # continue
+
+            if distances[i] < -0.04:
+                # color = colormap(197/255, 54/255, 197/255)  # purple like
+                continue
+            elif distances[i] < -0.01:
+                # color = colormap(1.0, 0.65, 0.0)  # yellow like
+                continue
+            else:
+                color = colormap(37/255, 1.0, 40/255)  # green-like
             xml_segments.append(xml_ball_segment.format(pcl[i, 0], pcl[i, 1], pcl[i, 2], *color))
+
+        #for i in range(new_points.shape[0]):
+        #    if crop_distances_new_points[i] >= -0.04:
+        #        continue
+        #    color = colormap(2, 0, 0)
+        #    xml_segments.append(xml_ball_segment.format(new_points[i, 0], new_points[i, 1], new_points[i, 2], *color))
         xml_segments.append(xml_tail)
 
         xml_content = str.join('', xml_segments)

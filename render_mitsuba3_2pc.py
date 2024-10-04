@@ -285,7 +285,8 @@ if __name__ == "__main__":
                     merge_renders(
                         groups[k],
                         paths[k],
-                        direction='horizontal'
+                        direction='horizontal',
+                        caption=False
                     )
 
             else:

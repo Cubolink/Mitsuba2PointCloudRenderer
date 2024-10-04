@@ -86,7 +86,7 @@ def get_images(files, replace_dots=False):
     return images
 
 
-def merge_renders(renders, filename, direction='vertical'):
+def merge_renders(renders, filename, direction='vertical', caption=True):
     if direction not in ['horizontal', 'vertical']:
         raise ValueError(f"Unknown '{direction}' direction when merging renders")
 
@@ -103,8 +103,9 @@ def merge_renders(renders, filename, direction='vertical'):
         image = image.resize((int(factor * image.width), 540))
         file = render.split('/')[-1]
 
-        # Draw text
-        ImageDraw.Draw(image).text((30, 10), file, fill=(128, 128, 128), font=font)
+        if caption:
+            # Draw text
+            ImageDraw.Draw(image).text((30, 10), file, fill=(128, 128, 128), font=font)
 
         images.append(image)
 
